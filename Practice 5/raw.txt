@@ -1,0 +1,27 @@
+MAGNUM SUPERMARKET
+Almaty, Kazakhstan
+
+Date: 12.03.2025
+Time: 18:48
+
+Milk 450
+Bread 220
+Chocolate 780
+Apple Juice 650
+Bananas 540
+Eggs 930
+Cheese 1250
+Chicken Breast 2100
+Yogurt 390
+Butter 870
+
+Subtotal: 8180
+Tax: 490
+
+Total: 8670
+
+Payment Method: CARD
+Card Number: **** **** **** 4582
+
+Thank you for shopping!
+Visit again!

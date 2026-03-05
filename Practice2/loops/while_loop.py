@@ -7,4 +7,4 @@ while i <= n:
     total += i
     i += 1
 
-print("Sum from 1 to", n, "=", total)
+print("Sum from 1 to", n, "=", total) 

@@ -1,5 +1,5 @@
 
-score = int(input("Score (0–100): "))
+score = int(input("Score (0+100): "))
 
 if score < 0 or score > 100:
     result = "Invalid score"

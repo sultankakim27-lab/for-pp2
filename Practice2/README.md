@@ -5,7 +5,7 @@ All examples are based on the W3Schools Python tutorial and are organized by top
 
 ## 📌 Topics Covered
 
-### 1. Boolean
+### 1. Boolean 
 - Boolean values (`True`, `False`)
 - Comparisons (`==`, `!=`, `>`, `<`, `>=`, `<=`)
 - Boolean operators (`and`, `or`, `not`)

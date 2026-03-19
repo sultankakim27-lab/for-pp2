@@ -40,7 +40,7 @@ Practice5/
    re.match() — match at the beginning of string
 
 5. Receipt Parsing
-   Using regex to extract information from `raw.txt`:
+   Usin regex to extract information from `raw.txt`:
 
 * product names
 * prices

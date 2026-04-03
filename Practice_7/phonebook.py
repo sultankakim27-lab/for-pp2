@@ -1,122 +1,272 @@
-import csv
+import os
 import psycopg2
-from config import load_config
+import csv
+
+DEFAULT_ENCODING = "utf-8"
+FALLBACK_ENCODING = "cp1251"
 
 def get_connection():
-    """Establishes a connection to the PostgreSQL database."""
-    params = load_config()
-    return psycopg2.connect(**params)
+    conn = psycopg2.connect(
+        host="localhost",
+        database="postgres",
+        user="postgres",
+        password="Wr111try#"
+    )
+    conn.set_client_encoding("UTF8")
+    return conn
 
-def import_from_csv(file_path):
-    """Imports contacts from a CSV file into the database."""
-    query = "INSERT INTO phonebook(first_name, phone_number) VALUES(%s, %s) ON CONFLICT (phone_number) DO NOTHING;"
+def ensure_table():
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS phonebook (
+                    id SERIAL PRIMARY KEY,
+                    first_name TEXT NOT NULL,
+                    phone_number TEXT NOT NULL UNIQUE
+                )
+            """)
+        conn.commit()
+
+def open_csv_path(path):
+    try:
+        return open(path, "r", encoding=DEFAULT_ENCODING, errors="strict")
+    except UnicodeDecodeError:
+        return open(path, "r", encoding=FALLBACK_ENCODING, errors="strict")
+
+def import_from_csv():
+    csv_path = os.path.join(os.path.dirname(__file__), "phonebook.csv")
+    if not os.path.isfile(csv_path):
+        print(f"CSV not found: {csv_path}")
+        return
+
     try:
         with get_connection() as conn:
-            with conn.cursor() as cur:
-                with open(file_path, mode='r', encoding='utf-8') as f:
-                    reader = csv.reader(f)
-                    next(reader)  # Skip header row
-                    for row in reader:
-                        cur.execute(query, (row[0], row[1]))
+            with conn.cursor() as cur, open_csv_path(csv_path) as f:
+                reader = csv.reader(f)
+                for row in reader:
+                    if len(row) < 2:
+                        continue
+                    first_name = row[0].strip()
+                    phone_number = row[1].strip()
+                    if not first_name or not phone_number:
+                        continue
+                    cur.execute("""
+                        INSERT INTO phonebook (first_name, phone_number)
+                        VALUES (%s, %s)
+                        ON CONFLICT (phone_number) DO NOTHING
+                    """, (first_name, phone_number))
             conn.commit()
-            print("Successfully imported contacts from CSV.")
+        print("CSV import successful!")
     except Exception as e:
-        print(f"Error importing from CSV: {e}")
+        print("Error import_from_csv:", e)
 
-def add_contact(name, phone):
-    """Inserts a new contact via console input."""
-    query = "INSERT INTO phonebook(first_name, phone_number) VALUES(%s, %s);"
+def print_rows(rows):
+    if not rows:
+        print("No results")
+        return
+    for first_name, phone_number in rows:
+        print(f"{first_name} - {phone_number}")
+
+def search():
+    print("\nSearch options:")
+    print("1. By name contains")
+    print("2. By exact phone")
+    print("3. By phone prefix")
+    print("4. Show all")
+    print("0. Back")
+    choice = input("Choose: ").strip()
+    if choice == "0":
+        return
+
+    query = None
+    condition = ""
+    params = ()
+    if choice == "1":
+        query = input("Name part: ").strip()
+        if not query:
+            print("Empty query")
+            return
+        condition = "WHERE first_name ILIKE %s"
+        params = (f"%{query}%",)
+    elif choice == "2":
+        query = input("Phone exact: ").strip()
+        if not query:
+            print("Empty query")
+            return
+        condition = "WHERE phone_number = %s"
+        params = (query,)
+    elif choice == "3":
+        query = input("Phone prefix: ").strip()
+        if not query:
+            print("Empty query")
+            return
+        condition = "WHERE phone_number LIKE %s"
+        params = (f"{query}%",)
+    elif choice == "4":
+        condition = ""
+        params = ()
+    else:
+        print("Invalid choice")
+        return
+
     try:
         with get_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute(query, (name, phone))
+                sql = f"""
+                    SELECT first_name, phone_number
+                    FROM phonebook
+                    {condition}
+                    ORDER BY first_name, phone_number
+                """
+                cur.execute(sql, params)
+                rows = cur.fetchall()
+                print_rows(rows)
+    except UnicodeDecodeError as e:
+        print("Encoding error in search result:", e)
+    except Exception as e:
+        print("Error search:", e)
+
+def add_contact():
+    name = input("Name: ").strip()
+    phone = input("Phone: ").strip()
+    if not name or not phone:
+        print("Name and phone are required")
+        return
+
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO phonebook (first_name, phone_number)
+                    VALUES (%s, %s)
+                """, (name, phone))
             conn.commit()
-            print(f"Contact '{name}' added successfully.")
+        print("Added!")
     except Exception as e:
-        print(f"Error adding contact: {e}")
+        print("Error add_contact:", e)
 
-def update_contact(name, new_phone):
-    """Updates a contact's phone number based on their name."""
-    query = "UPDATE phonebook SET phone_number = %s WHERE first_name = %s;"
+def update():
+    print("\nUpdate options:")
+    print("1. Find by name")
+    print("2. Find by phone")
+    print("0. Back")
+    mode = input("Choose: ").strip()
+    if mode == "0":
+        return
+
+    if mode == "1":
+        key_name = "first_name"
+        key_val = input("Name to update: ").strip()
+    elif mode == "2":
+        key_name = "phone_number"
+        key_val = input("Phone to update: ").strip()
+    else:
+        print("Invalid choice")
+        return
+
+    if not key_val:
+        print("Value is required")
+        return
+
+    print("\nField to change:")
+    print("1. first_name")
+    print("2. phone_number")
+    field_choice = input("Choose: ").strip()
+    if field_choice == "1":
+        target_field = "first_name"
+    elif field_choice == "2":
+        target_field = "phone_number"
+    else:
+        print("Invalid choice")
+        return
+
+    new_value = input(f"New {target_field}: ").strip()
+    if not new_value:
+        print("New value is required")
+        return
+
     try:
         with get_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute(query, (new_phone, name))
-                if cur.rowcount == 0:
-                    print(f"No contact found with the name '{name}'.")
+                cur.execute(f"""
+                    UPDATE phonebook
+                    SET {target_field} = %s
+                    WHERE {key_name} = %s
+                """, (new_value, key_val))
+                updated = cur.rowcount
+            conn.commit()
+        print(f"Updated {updated} row(s)" if updated else "No matching contact")
+    except Exception as e:
+        print("Error update:", e)
+
+def delete():
+    print("\nDelete options:")
+    print("1. By name")
+    print("2. By phone")
+    print("3. All (confirm)")
+    print("0. Back")
+    choice = input("Choose: ").strip()
+    if choice == "0":
+        return
+
+    if choice == "1":
+        key_name = "first_name"
+        key_val = input("Name to delete: ").strip()
+    elif choice == "2":
+        key_name = "phone_number"
+        key_val = input("Phone to delete: ").strip()
+    elif choice == "3":
+        ok = input("Drop all rows? Type YES to confirm: ").strip()
+        if ok != "YES":
+            print("Cancelled")
+            return
+        key_name = None
+        key_val = None
+    else:
+        print("Invalid choice")
+        return
+
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                if key_name is None:
+                    cur.execute("DELETE FROM phonebook")
                 else:
-                    print(f"Contact '{name}' updated successfully.")
+                    cur.execute(f"DELETE FROM phonebook WHERE {key_name} = %s", (key_val,))
+                deleted = cur.rowcount
             conn.commit()
+        print(f"Deleted {deleted} row(s)" if deleted else "No matching contact")
     except Exception as e:
-        print(f"Error updating contact: {e}")
+        print("Error delete:", e)
 
-def query_contacts(search_term):
-    """Queries contacts using a filter for name or phone prefix."""
-    query = "SELECT * FROM phonebook WHERE first_name ILIKE %s OR phone_number LIKE %s;"
+def main():
+    ensure_table()
     try:
-        with get_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute(query, (f'%{search_term}%', f'{search_term}%'))
-                results = cur.fetchall()
-                if not results:
-                    print("No contacts found matching the criteria.")
-                else:
-                    print("\n--- Search Results ---")
-                    for contact in results:
-                        print(f"ID: {contact[0]} | Name: {contact[1]} | Phone: {contact[2]}")
-    except Exception as e:
-        print(f"Error querying contacts: {e}")
-
-def delete_contact(identifier):
-    """Deletes a contact by name or phone number."""
-    query = "DELETE FROM phonebook WHERE first_name = %s OR phone_number = %s;"
-    try:
-        with get_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute(query, (identifier, identifier))
-                if cur.rowcount == 0:
-                    print(f"No contact found for '{identifier}'.")
-                else:
-                    print(f"Contact '{identifier}' deleted successfully.")
-            conn.commit()
-    except Exception as e:
-        print(f"Error deleting contact: {e}")
-
-def main_menu():
-    """Main terminal interface."""
-    while True:
-        print("\n===== PhoneBook Application =====")
-        print("1. Import contacts from CSV")
-        print("2. Add new contact (Manual)")
-        print("3. Update contact phone")
-        print("4. Search contacts (Filter)")
-        print("5. Delete contact")
-        print("6. Exit")
-        
-        choice = input("\nSelect an option (1-6): ")
-        
-        if choice == '1':
-            path = input("Enter CSV file path (e.g., contacts.csv): ")
-            import_from_csv(path)
-        elif choice == '2':
-            name = input("Enter first name: ")
-            phone = input("Enter phone number: ")
-            add_contact(name, phone)
-        elif choice == '3':
-            name = input("Enter the name of the contact to update: ")
-            new_phone = input("Enter the new phone number: ")
-            update_contact(name, new_phone)
-        elif choice == '4':
-            term = input("Enter search term (Name or Phone prefix): ")
-            query_contacts(term)
-        elif choice == '5':
-            target = input("Enter name or phone to delete: ")
-            delete_contact(target)
-        elif choice == '6':
-            print("Exiting application. Goodbye!")
-            break
-        else:
-            print("Invalid selection. Please try again.")
+        while True:
+            print("\n===== PhoneBook =====")
+            print("1. Import CSV")
+            print("2. Add contact")
+            print("3. Update contact")
+            print("4. Search contacts")
+            print("5. Delete contact")
+            print("0. Exit")
+            choice = input("Choose: ").strip()
+            if choice == "1":
+                import_from_csv()
+            elif choice == "2":
+                add_contact()
+            elif choice == "3":
+                update()
+            elif choice == "4":
+                search()
+            elif choice == "5":
+                delete()
+            elif choice == "0":
+                break
+            else:
+                print("Invalid choice")
+    except KeyboardInterrupt:
+        print("\nExit by user")
 
 if __name__ == "__main__":
-    main_menu()
+    main()

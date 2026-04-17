@@ -1,149 +1,64 @@
-# Practice6 🚀
-## File Handling and Built-in Functions in Python
+# Practice 09: Game Development with Pygame (Part 1)
 
-![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python)
-![Status](https://img.shields.io/badge/Status-Completed-brightgreen)
-![Practice](https://img.shields.io/badge/Practice-6-orange)
-![GitHub](https://img.shields.io/badge/Repo-Active-black?logo=github)
+This repository contains the first part of Practice 09, focusing on the fundamentals of game development using the **Pygame** library. The project consists of three distinct applications: a synchronized clock, a music player, and an interactive moving ball game.
+
+## 🚀 Projects Overview
+
+### 1. Mickey's Clock Application
+A digital-style analog clock that synchronizes with the system time.
+* **Features:** Uses custom graphics for clock hands (Mickey Mouse hands).
+* **Logic:** The right hand represents minutes, and the left hand represents seconds. 
+* **Math:** Angles are calculated in real-time based on system seconds and minutes using `pygame.transform.rotate()`.
+
+### 2. Music Player
+A keyboard-controlled audio player for managing playlists.
+* **Controls:**
+    * `P`: Play / Resume
+    * `S`: Stop
+    * `N`: Next Track
+    * `B`: Previous Track (Back)
+* **Features:** Displays track information and handles multiple audio files using `pygame.mixer`.
+
+### 3. Moving Ball
+A simple interactive game testing coordinate handling and boundary logic.
+* **Controls:** Arrow keys (Up, Down, Left, Right).
+* **Mechanics:** The ball moves in increments of 20 pixels.
+* **Constraints:** Includes strict boundary checking to prevent the ball from moving off-screen.
 
 ---
 
-## 📌 Objective
-This project demonstrates working with files, directories, and built-in functions in Python.
+## 🛠 Installation & Setup
 
-The main goals:
-- Learn file handling (read, write, append)
-- Work with directories and file paths
-- Use built-in functions for data processing
-- Practice real-world Python operations
+1.  **Clone the repository:**
+    ```bash
+    git clone [https://github.com/your-username/your-repo-name.git](https://github.com/your-username/your-repo-name.git)
+    ```
+2.  **Navigate to the project folder:**
+    ```bash
+    cd Practice7
+    ```
+3.  **Install dependencies:**
+    Make sure you have Python installed, then run:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
 ---
 
-## 📁 Project Structure
+## 📂 Repository Structure
 
 ```text
-Practice6/
-│
-├── sample.txt
-│
-├── file_handling/
-│   ├── read_files.py
-│   ├── write_files.py
-│   └── copy_delete_files.py
-│
-├── directory_management/
-│   ├── create_list_dirs.py
-│   └── move_files.py
-│
-├── builtin_functions/
-│   ├── map_filter_reduce.py
-│   └── enumerate_zip_examples.py
-```
-
----
-
-## 📂 File Handling
-
-### Supported Modes:
-- `r` – read
-- `w` – write (overwrite)
-- `a` – append
-- `x` – create new file
-
-### Reading Methods:
-- `read()` – full file
-- `readline()` – one line
-- `readlines()` – list of lines
-
-### Example:
-```python
-with open("sample.txt", "r") as f:
-    print(f.read())
-```
-
----
-
-## 📁 Directory Management
-
-Functions used:
-- `os.mkdir()` – create directory
-- `os.makedirs()` – nested directories
-- `os.listdir()` – list files
-- `os.getcwd()` – current directory
-- `os.chdir()` – change directory
-- `os.rmdir()` – remove directory
-
----
-
-## 📦 File Operations
-
-Using `shutil` module:
-- Copy files
-- Move files
-- Backup files
-
-### Example:
-```python
-import shutil
-shutil.copy("sample.txt", "backup.txt")
-```
-
----
-
-## 🔢 Built-in Functions
-
-### Used functions:
-- `len()`, `sum()`, `min()`, `max()`
-- `map()`, `filter()`, `reduce()`
-- `enumerate()`, `zip()`
-- `sorted()`
-- Type conversion: `int()`, `float()`, `str()`
-
-### Example:
-```python
-from functools import reduce
-
-nums = [1,2,3,4]
-
-print(sum(nums))
-print(list(map(lambda x: x*2, nums)))
-print(reduce(lambda a,b: a+b, nums))
-```
-
----
-
-## 📊 Sample Data
-
-File: `sample.txt`
-
-```text
-1 2 3 4 5
-```
-
----
-
-## 🚀 How to Run
-
-1. Open project in VS Code  
-2. Run any file:
-
-```bash
-python filename.py
-```
-
----
-
-## ✅ Conclusion
-
-This project covers:
-- File handling basics
-- Directory operations
-- Core Python built-in functions
-
-It builds a strong foundation for real-world Python development.
-
----
-
-## 💡 Author
-
-Student Practice Work - Python Fundamentals
+Practice7/
+├── mickeys_clock/
+│   ├── main.py          # Application entry point
+│   ├── clock.py         # Logic for time calculation & rotation
+│   └── images/          # Assets for the clock
+├── music_player/
+│   ├── main.py          # Keyboard event handling
+│   ├── player.py        # Mixer logic & playlist management
+│   └── music/           # Audio files (MP3/WAV)
+├── moving_ball/
+│   ├── main.py          # Game loop and drawing
+│   └── ball.py          # Boundary logic
+├── requirements.txt     # Project dependencies
+└── README.md            # Project documentation

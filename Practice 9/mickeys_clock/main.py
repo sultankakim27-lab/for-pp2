@@ -22,6 +22,7 @@ def main() -> None:
                 running = False
 
         mickey_clock.draw(screen)
+
         pygame.display.flip()
         clock.tick(FPS)
 

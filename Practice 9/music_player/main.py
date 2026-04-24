@@ -44,10 +44,10 @@ def main() -> None:
     running = True
     while running:
         for event in pygame.event.get():
-            player.handle_event(event)
 
             if event.type == pygame.QUIT:
                 running = False
+
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p:
                     player.play()
